@@ -64,7 +64,7 @@ func TestGetSecret(t *testing.T) {
 	}{
 		{
 			name:   "test valid user secret",
-			path:   "authcrunch/caddy/jsmith",
+			path:   "authcrunch/caddy/users/jsmith",
 			region: "us-east-1",
 			want:   jsmith,
 			mockClient: smithyhttp.ClientDoFunc(func(r *http.Request) (*http.Response, error) {
@@ -169,7 +169,7 @@ func TestGetSecretByKey(t *testing.T) {
 	}{
 		{
 			name:   "test valid user secret by key",
-			path:   "authcrunch/caddy/jsmith",
+			path:   "authcrunch/caddy/users/jsmith",
 			region: "us-east-1",
 			key:    "name",
 			want:   "John Smith",
@@ -186,7 +186,7 @@ func TestGetSecretByKey(t *testing.T) {
 		},
 		{
 			name:   "test key not found",
-			path:   "authcrunch/caddy/jsmith",
+			path:   "authcrunch/caddy/users/jsmith",
 			region: "us-east-1",
 			key:    "foo",
 			mockClient: smithyhttp.ClientDoFunc(func(r *http.Request) (*http.Response, error) {
@@ -200,7 +200,7 @@ func TestGetSecretByKey(t *testing.T) {
 				}, nil
 			}),
 			shouldErr: true,
-			err:       fmt.Errorf("key %q not found in %q secret", "foo", "authcrunch/caddy/jsmith"),
+			err:       fmt.Errorf("key %q not found in %q secret", "foo", "authcrunch/caddy/users/jsmith"),
 		},
 		{
 			name:   "test secret not found",

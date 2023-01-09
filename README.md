@@ -126,7 +126,7 @@ the following key values.
 
 Use `aws/secretsmanager` for the "Encryption key".
 
-Set secret name to `authcrunch/caddy/jsmith` and description
+Set secret name to `authcrunch/caddy/users/jsmith` and description
 to `Caddy User Credentials for jsmith`
 
 After the creation of the secret, list secrets with `aws secretsmanager list-secrets` again.
@@ -135,7 +135,7 @@ After the creation of the secret, list secrets with `aws secretsmanager list-sec
 {
     "SecretList": [
         {
-            "Name": "authcrunch/caddy/jsmith",
+            "Name": "authcrunch/caddy/users/jsmith",
             "Tags": [],
             "LastChangedDate": 1673135119.189,
             "SecretVersionsToStages": {
@@ -144,7 +144,7 @@ After the creation of the secret, list secrets with `aws secretsmanager list-sec
                 ]
             },
             "CreatedDate": 1673135119.15,
-            "ARN": "arn:aws:secretsmanager:us-east-1:123456789012:secret:authcrunch/caddy/jsmith-tz6d06",
+            "ARN": "arn:aws:secretsmanager:us-east-1:123456789012:secret:authcrunch/caddy/users/jsmith-tz6d06",
             "Description": "Caddy User Credentials for jsmith"
         }
     ]
@@ -154,21 +154,21 @@ After the creation of the secret, list secrets with `aws secretsmanager list-sec
 Next, retrieve the previously created secret:
 
 ```bash
-aws secretsmanager get-secret-value --secret-id authcrunch/caddy/jsmith
+aws secretsmanager get-secret-value --secret-id authcrunch/caddy/users/jsmith
 ```
 
 The expected output follows:
 
 ```json
 {
-    "Name": "authcrunch/caddy/jsmith",
+    "Name": "authcrunch/caddy/users/jsmith",
     "VersionId": "278a2e61-f3e3-4280-a444-333d7186d5ce",
     "SecretString": "{\"username\":\"jsmith\",\"password\":\"bcrypt:10:$2a$10$iqq53VjdCwknBSBrnyLd9OH1Mfh6kqPezMMy6h6F41iLdVDkj13I6\",\"api_key\":\"bcrypt:10:$2a$10$TEQ7ZG9cAdWwhQK36orCGOlokqQA55ddE0WEsl00oLZh567okdcZ6\"}",
     "VersionStages": [
         "AWSCURRENT"
     ],
     "CreatedDate": 1673135119.183,
-    "ARN": "arn:aws:secretsmanager:us-east-1:123456789012:secret:authcrunch/caddy/jsmith-tz6d06"
+    "ARN": "arn:aws:secretsmanager:us-east-1:123456789012:secret:authcrunch/caddy/users/jsmith-tz6d06"
 }
 ```
 
