@@ -25,11 +25,21 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 )
 
+type mockCredentialsProvider struct{}
+
+func (mockCredentialsProvider) Retrieve(context.Context) (aws.Credentials, error) {
+	return aws.Credentials{
+		AccessKeyID: "AKID", SecretAccessKey: "SECRET", SessionToken: "SESSION",
+		Source: "mock credentials",
+	}, nil
+}
+
 // Client provides interface to query AWS Secrets Manager service.
 type Client interface {
 	GetSecret(string) (map[string]interface{}, error)
 	GetSecretByKey(string, string) (string, error)
 	SetMockClient(aws.HTTPClient)
+	SetMockCredentialsProvider(aws.CredentialsProvider)
 }
 
 type clientConfig struct {
@@ -104,4 +114,9 @@ func (c *client) GetSecretByKey(path string, key string) (string, error) {
 // SetMockClient configures mock HTTP client.
 func (c *client) SetMockClient(mockClient aws.HTTPClient) {
 	c.serviceConfig.HTTPClient = mockClient
+}
+
+// SetMockCredentialsProvider configures mock AWS credentials provider.
+func (c *client) SetMockCredentialsProvider(mockProvider aws.CredentialsProvider) {
+	c.serviceConfig.Credentials = mockProvider
 }

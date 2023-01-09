@@ -123,6 +123,7 @@ func TestGetSecret(t *testing.T) {
 			}
 
 			c.SetMockClient(tc.mockClient)
+			c.SetMockCredentialsProvider(mockCredentialsProvider{})
 
 			got, err := c.GetSecret(tc.path)
 
@@ -234,6 +235,7 @@ func TestGetSecretByKey(t *testing.T) {
 			}
 
 			c.SetMockClient(tc.mockClient)
+			c.SetMockCredentialsProvider(mockCredentialsProvider{})
 
 			got, err := c.GetSecretByKey(tc.path, tc.key)
 			if err != nil {
