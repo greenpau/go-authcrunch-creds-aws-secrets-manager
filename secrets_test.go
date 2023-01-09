@@ -63,9 +63,10 @@ func TestGetSecret(t *testing.T) {
 		err        error
 	}{
 		{
-			name: "test valid user secret",
-			path: "authcrunch/caddy/jsmith",
-			want: jsmith,
+			name:   "test valid user secret",
+			path:   "authcrunch/caddy/jsmith",
+			region: "us-east-1",
+			want:   jsmith,
 			mockClient: smithyhttp.ClientDoFunc(func(r *http.Request) (*http.Response, error) {
 				// t.Logf("received HTTP request")
 				// dump, err := httputil.DumpRequest(r, true)
@@ -84,9 +85,10 @@ func TestGetSecret(t *testing.T) {
 			}),
 		},
 		{
-			name: "test valid access token secret",
-			path: "authcrunch/caddy/access_token",
-			want: accessToken,
+			name:   "test valid access token secret",
+			path:   "authcrunch/caddy/access_token",
+			region: "us-east-1",
+			want:   accessToken,
 			mockClient: smithyhttp.ClientDoFunc(func(r *http.Request) (*http.Response, error) {
 				response := packMapToJSON(t, map[string]interface{}{
 					"SecretString": packMapToJSON(t, accessToken),
@@ -99,8 +101,9 @@ func TestGetSecret(t *testing.T) {
 			}),
 		},
 		{
-			name: "test empty response",
-			path: "authcrunch/caddy/empty",
+			name:   "test empty response",
+			path:   "authcrunch/caddy/empty",
+			region: "us-east-1",
 			mockClient: smithyhttp.ClientDoFunc(func(r *http.Request) (*http.Response, error) {
 				return &http.Response{
 					StatusCode: 200,
@@ -164,10 +167,11 @@ func TestGetSecretByKey(t *testing.T) {
 		err        error
 	}{
 		{
-			name: "test valid user secret by key",
-			path: "authcrunch/caddy/jsmith",
-			key:  "name",
-			want: "John Smith",
+			name:   "test valid user secret by key",
+			path:   "authcrunch/caddy/jsmith",
+			region: "us-east-1",
+			key:    "name",
+			want:   "John Smith",
 			mockClient: smithyhttp.ClientDoFunc(func(r *http.Request) (*http.Response, error) {
 				response := packMapToJSON(t, map[string]interface{}{
 					"SecretString": packMapToJSON(t, jsmith),
@@ -180,9 +184,10 @@ func TestGetSecretByKey(t *testing.T) {
 			}),
 		},
 		{
-			name: "test key not found",
-			path: "authcrunch/caddy/jsmith",
-			key:  "foo",
+			name:   "test key not found",
+			path:   "authcrunch/caddy/jsmith",
+			region: "us-east-1",
+			key:    "foo",
 			mockClient: smithyhttp.ClientDoFunc(func(r *http.Request) (*http.Response, error) {
 				response := packMapToJSON(t, map[string]interface{}{
 					"SecretString": packMapToJSON(t, jsmith),
@@ -197,9 +202,10 @@ func TestGetSecretByKey(t *testing.T) {
 			err:       fmt.Errorf("key %q not found in %q secret", "foo", "authcrunch/caddy/jsmith"),
 		},
 		{
-			name: "test secret not found",
-			path: "authcrunch/caddy/foo",
-			key:  "bar",
+			name:   "test secret not found",
+			path:   "authcrunch/caddy/foo",
+			region: "us-east-1",
+			key:    "bar",
 			mockClient: smithyhttp.ClientDoFunc(func(r *http.Request) (*http.Response, error) {
 				response := packMapToJSON(t, map[string]interface{}{
 					"__type":  "ResourceNotFoundException",
