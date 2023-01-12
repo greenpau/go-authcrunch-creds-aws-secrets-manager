@@ -1,7 +1,7 @@
-# go-authcrunch-creds-aws-secrets-manager
+# go-authcrunch-secrets-aws-secrets-manager
 
-<a href="https://github.com/greenpau/go-authcrunch-creds-aws-secrets-manager/actions/" target="_blank"><img src="https://github.com/greenpau/go-authcrunch-creds-aws-secrets-manager/workflows/build/badge.svg?branch=main"></a>
-<a href="https://pkg.go.dev/github.com/greenpau/go-authcrunch-creds-aws-secrets-manager" target="_blank"><img src="https://img.shields.io/badge/godoc-reference-blue.svg"></a>
+<a href="https://github.com/greenpau/go-authcrunch-secrets-aws-secrets-manager/actions/" target="_blank"><img src="https://github.com/greenpau/go-authcrunch-secrets-aws-secrets-manager/workflows/build/badge.svg?branch=main"></a>
+<a href="https://pkg.go.dev/github.com/greenpau/go-authcrunch-secrets-aws-secrets-manager" target="_blank"><img src="https://img.shields.io/badge/godoc-reference-blue.svg"></a>
 
 [AuthCrunch](https://github.com/greenpau/go-authcrunch) Credentials Plugin
 for AWS Secrets Manager Integration.
