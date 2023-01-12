@@ -1,4 +1,4 @@
-module github.com/greenpau/go-authcrunch-creds-aws-secrets-manager
+module github.com/greenpau/go-authcrunch-secrets-aws-secrets-manager
 
 go 1.18
 
