@@ -19,15 +19,22 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"regexp"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 )
 
-type mockCredentialsProvider struct{}
+var (
+	awsRegionRgx *regexp.Regexp = regexp.MustCompile(`\w{2}-\w+-\d`)
+)
 
-func (mockCredentialsProvider) Retrieve(context.Context) (aws.Credentials, error) {
+// MockCredentialsProvider mocks AWS credentials provider.
+type MockCredentialsProvider struct{}
+
+// Retrieve returns mock AWS credentials.
+func (MockCredentialsProvider) Retrieve(context.Context) (aws.Credentials, error) {
 	return aws.Credentials{
 		AccessKeyID: "AKID", SecretAccessKey: "SECRET", SessionToken: "SESSION",
 		Source: "mock credentials",
@@ -36,14 +43,17 @@ func (mockCredentialsProvider) Retrieve(context.Context) (aws.Credentials, error
 
 // Client provides interface to query AWS Secrets Manager service.
 type Client interface {
-	GetSecret(string) (map[string]interface{}, error)
-	GetSecretByKey(string, string) (string, error)
+	GetSecret(context.Context, string) (map[string]interface{}, error)
+	GetSecretByKey(context.Context, string, string) (interface{}, error)
 	SetMockClient(aws.HTTPClient)
 	SetMockCredentialsProvider(aws.CredentialsProvider)
+	GetConfig(context.Context) map[string]interface{}
 }
 
 type clientConfig struct {
-	Region string
+	ID       string `json:"id,omitempty" xml:"id,omitempty" yaml:"id,omitempty"`
+	Region   string `json:"region,omitempty" xml:"region,omitempty" yaml:"region,omitempty"`
+	Provider string `json:"provider,omitempty" xml:"provider,omitempty" yaml:"provider,omitempty"`
 }
 
 type client struct {
@@ -53,14 +63,23 @@ type client struct {
 }
 
 // NewClient returns an instance of Client.
-func NewClient(region string) (Client, error) {
+func NewClient(ctx context.Context, id string, region string) (Client, error) {
 	c := &client{
 		config: &clientConfig{
-			Region: region,
+			ID:       id,
+			Region:   region,
+			Provider: "aws_secrets_manager",
 		},
 	}
+
+	if region != "" {
+		if awsRegionRgx.MatchString(region) == false {
+			return nil, fmt.Errorf("malformed %q region", region)
+		}
+	}
+
 	serviceConfig, err := config.LoadDefaultConfig(
-		context.TODO(),
+		ctx,
 		config.WithRegion(c.config.Region),
 		// config.WithClientLogMode(aws.LogRetries|aws.LogRequestWithBody|aws.LogResponseWithBody|aws.LogRequestEventMessage|aws.LogResponseEventMessage|aws.LogSigning),
 	)
@@ -72,7 +91,7 @@ func NewClient(region string) (Client, error) {
 }
 
 // GetSecret returns the key-value map of the stored secret.
-func (c *client) GetSecret(path string) (map[string]interface{}, error) {
+func (c *client) GetSecret(ctx context.Context, path string) (map[string]interface{}, error) {
 	if c.serviceClient == nil {
 		c.serviceClient = secretsmanager.NewFromConfig(c.serviceConfig)
 	}
@@ -80,7 +99,7 @@ func (c *client) GetSecret(path string) (map[string]interface{}, error) {
 		SecretId:     aws.String(path),
 		VersionStage: aws.String("AWSCURRENT"),
 	}
-	result, err := c.serviceClient.GetSecretValue(context.TODO(), input)
+	result, err := c.serviceClient.GetSecretValue(ctx, input)
 	if err != nil {
 		return nil, err
 	}
@@ -99,8 +118,8 @@ func (c *client) GetSecret(path string) (map[string]interface{}, error) {
 }
 
 // GetSecret returns the key-value map of the stored secret.
-func (c *client) GetSecretByKey(path string, key string) (string, error) {
-	secret, err := c.GetSecret(path)
+func (c *client) GetSecretByKey(ctx context.Context, path string, key string) (interface{}, error) {
+	secret, err := c.GetSecret(ctx, path)
 	if err != nil {
 		return "", err
 	}
@@ -119,4 +138,14 @@ func (c *client) SetMockClient(mockClient aws.HTTPClient) {
 // SetMockCredentialsProvider configures mock AWS credentials provider.
 func (c *client) SetMockCredentialsProvider(mockProvider aws.CredentialsProvider) {
 	c.serviceConfig.Credentials = mockProvider
+}
+
+// GetConfig returns client configuration.
+func (c *client) GetConfig(_ context.Context) map[string]interface{} {
+	cfg := map[string]interface{}{
+		"id":       c.config.ID,
+		"region":   c.config.Region,
+		"provider": c.config.Provider,
+	}
+	return cfg
 }

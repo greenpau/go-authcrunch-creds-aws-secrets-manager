@@ -31,6 +31,8 @@ test: build_info covdir linter gtest coverage
 ctest: covdir linter
 	@richgo version || go install github.com/kyoh86/richgo@latest
 	@time richgo test $(VERBOSE) $(TEST) -coverprofile=.coverage/coverage.out ./...
+	@go tool cover -html=.coverage/coverage.out -o .coverage/coverage.html
+	@go tool cover -func=.coverage/coverage.out
 	@echo "$@: complete"
 
 covdir:

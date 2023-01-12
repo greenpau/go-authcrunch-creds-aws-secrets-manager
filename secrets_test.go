@@ -15,6 +15,7 @@
 package secrets
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -36,6 +37,56 @@ func packMapToJSON(t *testing.T, m map[string]interface{}) string {
 		t.Fatalf("failed to marshal %v: %v", m, err)
 	}
 	return string(b)
+}
+
+func TestNewClient(t *testing.T) {
+	testcases := []struct {
+		name      string
+		region    string
+		want      map[string]interface{}
+		shouldErr bool
+		err       error
+	}{
+		{
+			name:   "test new client with valid region",
+			region: "us-east-1",
+			want: map[string]interface{}{
+				"id":       "foo",
+				"region":   "us-east-1",
+				"provider": "aws_secrets_manager",
+			},
+		},
+		{
+			name:      "test new client with malformed region",
+			region:    "foo-bar-baz",
+			shouldErr: true,
+			err:       fmt.Errorf("malformed %q region", "foo-bar-baz"),
+		},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			c, err := NewClient(context.TODO(), "foo", tc.region)
+			if err != nil {
+				if !tc.shouldErr {
+					t.Fatalf("expected success, got: %v", err)
+				}
+				if diff := cmp.Diff(err.Error(), tc.err.Error()); diff != "" {
+					t.Logf("unexpected error: %v", err)
+					t.Fatalf("NewClient() error mismatch (-want +got):\n%s", diff)
+				}
+				return
+			}
+			if tc.shouldErr {
+				t.Fatalf("unexpected success, want: %v", tc.err)
+			}
+
+			got := c.GetConfig(context.TODO())
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Logf("JSON: %v", packMapToJSON(t, got))
+				t.Errorf("NewClient() mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
 }
 
 func TestGetSecret(t *testing.T) {
@@ -114,25 +165,44 @@ func TestGetSecret(t *testing.T) {
 			shouldErr: true,
 			err:       errors.New("SecretString not found in response"),
 		},
+		{
+			name:   "test malformed response",
+			path:   "authcrunch/caddy/empty",
+			region: "us-east-1",
+			mockClient: smithyhttp.ClientDoFunc(func(r *http.Request) (*http.Response, error) {
+				return &http.Response{
+					StatusCode: 200,
+					Header: http.Header{
+						"X-Amzn-Requestid": []string{"524b9962-6854-4b5c-aa53-81759ef610dd"},
+					},
+					Body: ioutil.NopCloser(strings.NewReader(`{"foo":"bar"`)),
+				}, nil
+			}),
+			shouldErr: true,
+			err: fmt.Errorf("operation error Secrets Manager: GetSecretValue, https response error StatusCode: %d, RequestID: %s, %s",
+				200, "524b9962-6854-4b5c-aa53-81759ef610dd", "deserialization failed, failed to decode response body, unexpected EOF",
+			),
+		},
 	}
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			c, err := NewClient(tc.region)
+			c, err := NewClient(context.TODO(), "foo", tc.region)
 			if err != nil {
 				t.Fatalf("unxpected error during client initialization: %v", err)
 			}
 
 			c.SetMockClient(tc.mockClient)
-			c.SetMockCredentialsProvider(mockCredentialsProvider{})
+			c.SetMockCredentialsProvider(MockCredentialsProvider{})
 
-			got, err := c.GetSecret(tc.path)
+			got, err := c.GetSecret(context.TODO(), tc.path)
 
 			if err != nil {
 				if !tc.shouldErr {
 					t.Fatalf("expected success, got: %v", err)
 				}
 				if diff := cmp.Diff(err.Error(), tc.err.Error()); diff != "" {
-					t.Fatalf("unexpected error: %v, want: %v", err, tc.err)
+					t.Logf("unexpected error: %v", err)
+					t.Fatalf("GetSecret() error mismatch (-want +got):\n%s", diff)
 				}
 				return
 			}
@@ -229,15 +299,15 @@ func TestGetSecretByKey(t *testing.T) {
 	}
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			c, err := NewClient(tc.region)
+			c, err := NewClient(context.TODO(), "foo", tc.region)
 			if err != nil {
 				t.Fatalf("unxpected error during client initialization: %v", err)
 			}
 
 			c.SetMockClient(tc.mockClient)
-			c.SetMockCredentialsProvider(mockCredentialsProvider{})
+			c.SetMockCredentialsProvider(MockCredentialsProvider{})
 
-			got, err := c.GetSecretByKey(tc.path, tc.key)
+			got, err := c.GetSecretByKey(context.TODO(), tc.path, tc.key)
 			if err != nil {
 				if !tc.shouldErr {
 					t.Fatalf("expected success, got: %v", err)
